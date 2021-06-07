@@ -25,7 +25,23 @@ if __name__ == '__main__':
     bounds = reader.GetOutput().GetBounds()
     print('Bounds:', ', '.join(['{:.3f}'.format(f) for f in bounds]))
 
-    # ----------
+    # ---------- cutter 1
+
+    plane1 = vtk.vtkPlane()
+    plane1.SetOrigin(reader.GetOutput().GetCenter())
+    plane1.SetNormal(1, 0, 0)
+    cutter1 = vtk.vtkPlaneCutter()
+    cutter1.SetInputConnection(reader.GetOutputPort())
+    cutter1.SetPlane(plane1)
+
+    # ---------- cutter 2
+
+    plane2 = vtk.vtkPlane()
+    plane2.SetOrigin(reader.GetOutput().GetCenter())
+    plane2.SetNormal(0, 0, 1)
+    cutter2 = vtk.vtkPlaneCutter()
+    cutter2.SetInputConnection(reader.GetOutputPort())
+    cutter2.SetPlane(plane2)
 
     p01 = (bounds[1] , bounds[0] , bounds[5])
     p02 = (bounds[2], bounds[3], bounds[5])
@@ -44,82 +60,47 @@ if __name__ == '__main__':
         output = cut.GetOutput()
         _vtkAppendPolyData.AddInputData(output)
 
-    # ----------
-
-    plane = vtk.vtkPlane()
-    plane.SetOrigin((bounds[1] + bounds[0]) / 2.0, (bounds[3] + bounds[2]) / 2.0, bounds[4])
-    plane.SetNormal(1, 0, 0)
-
-    # Create cutter
-    high = plane.EvaluateFunction((bounds[1] + bounds[0]) / 2.0, (bounds[3] + bounds[2]) / 2.0, bounds[5])
-
-    verticalCutter = vtk.vtkCutter()
-    verticalCutter.SetInputConnection(reader.GetOutputPort())
-    verticalCutter.SetCutFunction(plane)
-    verticalCutter.GenerateValues(1, 0.99, 0.99 * high)
-
-
-
-    plane2 = vtk.vtkPlane()
-    plane2.SetOrigin( bounds[5], (bounds[1] + bounds[0]) / 2.0, 0)
-    plane2.SetNormal(0, 0, -1)
-
-
-    verticalCutter2 = vtk.vtkCutter()
-    verticalCutter2.SetInputConnection(reader.GetOutputPort())
-    verticalCutter2.SetCutFunction(plane2)
-    verticalCutter2.GenerateValues(1, 0.99, 0.99 * high)
-
-
     horizontalCutterMapper = vtk.vtkPolyDataMapper()
     horizontalCutterMapper.SetInputConnection(_vtkAppendPolyData.GetOutputPort())
     horizontalCutterMapper.ScalarVisibilityOff()
-
-    verticalCutterMapper = vtk.vtkPolyDataMapper()
-    verticalCutterMapper.SetInputConnection(verticalCutter.GetOutputPort())
-    verticalCutterMapper.ScalarVisibilityOff()
-
-    verticalCutterMapper2 = vtk.vtkPolyDataMapper()
-    verticalCutterMapper2.SetInputConnection(verticalCutter2.GetOutputPort())
-    verticalCutterMapper2.ScalarVisibilityOff()
-
-
-
-    # ----------
-
-    # Create horizontal cut actor
     horizontalCutterActor = vtk.vtkActor()
     horizontalCutterActor.GetProperty().SetColor(colors.GetColor3d('Banana'))
     horizontalCutterActor.GetProperty().SetLineWidth(2)
     horizontalCutterActor.SetMapper(horizontalCutterMapper)
 
-    # Create  cut actor
-    verticalCutterActor = vtk.vtkActor()
-    verticalCutterActor.GetProperty().SetColor(colors.GetColor3d('Banana'))
-    verticalCutterActor.GetProperty().SetLineWidth(2)
-    verticalCutterActor.SetMapper(verticalCutterMapper)
 
-    verticalCutterActor2 = vtk.vtkActor()
-    verticalCutterActor2.GetProperty().SetColor(colors.GetColor3d('Banana'))
-    verticalCutterActor2.GetProperty().SetLineWidth(2)
-    verticalCutterActor2.SetMapper(verticalCutterMapper2)
+    ################# cutter 1
+    # Create cutter actor
+    cutter1Mapper = vtk.vtkCompositePolyDataMapper()
+    cutter1Mapper.SetInputConnection(cutter1.GetOutputPort())
+    cutter1Mapper.ScalarVisibilityOff()
+    cutter1Actor = vtk.vtkActor()
+    cutter1Actor.SetMapper(cutter1Mapper)
+    cutter1Actor.GetProperty().SetColor(colors.GetColor3d('Banana'))
 
+    ################# cutter 2
+    # Create cutter actor
+    cutter2Mapper = vtk.vtkCompositePolyDataMapper()
+    cutter2Mapper.SetInputConnection(cutter2.GetOutputPort())
+    cutter2Mapper.ScalarVisibilityOff()
+    cutter2Actor = vtk.vtkActor()
+    cutter2Actor.SetMapper(cutter2Mapper)
+    cutter2Actor.GetProperty().SetColor(colors.GetColor3d('Banana'))
 
-
+    ################# model
     # Create model actor
     modelMapper = vtk.vtkPolyDataMapper()
     modelMapper.SetInputConnection(reader.GetOutputPort())
     modelMapper.ScalarVisibilityOff()
-
     modelActor = vtk.vtkActor()
     modelActor.GetProperty().SetColor(colors.GetColor3d('Flesh'))
     modelActor.SetMapper(modelMapper)
 
     # Create renderers and add actors of plane and model
     renderer = vtk.vtkRenderer()
+    renderer.AddActor(cutter1Actor)
+    renderer.AddActor(cutter2Actor)
     renderer.AddActor(horizontalCutterActor)
-    renderer.AddActor(verticalCutterActor)
-    renderer.AddActor(verticalCutterActor2)
     renderer.AddActor(modelActor)
 
     # Add renderer to renderwindow and render
@@ -142,3 +123,14 @@ if __name__ == '__main__':
     renderWindow.Render()
 
     interactor.Start()
+
+    # planeCut.Update()
+    #
+    # #DataSet of your cut:
+    # planeCutPolyData=planeCut.GetOutput()
+    #
+    # #Let write all the slice data:
+    # w=vtk.vtkPolyDataWriter()
+    # w.SetFileName('anyfilename.vtp')
+    # w.SetInputConnection(placeCut.GetOutputPort())
+    # w.Write()

@@ -25,30 +25,23 @@ if __name__ == '__main__':
     bounds = reader.GetOutput().GetBounds()
     print('Bounds:', ', '.join(['{:.3f}'.format(f) for f in bounds]))
 
-    # ---------- cutter 1
-
+    # ---------- X plane
     plane1 = vtk.vtkPlane()
     plane1.SetOrigin(reader.GetOutput().GetCenter())
     plane1.SetNormal(1, 0, 0)
-    cutter1 = vtk.vtkPlaneCutter()
-    cutter1.SetInputConnection(reader.GetOutputPort())
-    cutter1.SetPlane(plane1)
-
-    # ---------- cutter 2
-
+    # ---------- Z plane
     plane2 = vtk.vtkPlane()
     plane2.SetOrigin(reader.GetOutput().GetCenter())
     plane2.SetNormal(0, 0, 1)
-    cutter2 = vtk.vtkPlaneCutter()
-    cutter2.SetInputConnection(reader.GetOutputPort())
-    cutter2.SetPlane(plane2)
 
     p01 = (bounds[1] , bounds[0] , bounds[5])
     p02 = (bounds[2], bounds[3], bounds[5])
+
+    # collectData
     _vtkAppendPolyData = vtk.vtkAppendPolyData()
 
-    for ks in range(numberOfCuts):
-        p0 = (0, p01[1] + (p02[1] - p01[1]) / float(numberOfCuts) * ks, 0)
+    for i in range(numberOfCuts):
+        p0 = (0, p01[1] + (p02[1] - p01[1]) / float(numberOfCuts) * i, 0)
         plane = vtk.vtkPlane()
         plane.SetNormal(0, 1, 0)
         plane.SetOrigin(p0)
@@ -57,8 +50,62 @@ if __name__ == '__main__':
         cut.SetInputConnection(reader.GetOutputPort())
         cut.SetCutFunction(plane)
         cut.Update()
-        output = cut.GetOutput()
-        _vtkAppendPolyData.AddInputData(output)
+
+        # fill cutts
+        FeatureEdges = vtk.vtkFeatureEdges()
+        FeatureEdges.SetInputConnection(cut.GetOutputPort())
+        FeatureEdges.BoundaryEdgesOn()
+        FeatureEdges.FeatureEdgesOff()
+        FeatureEdges.NonManifoldEdgesOff()
+        FeatureEdges.ManifoldEdgesOff()
+        FeatureEdges.Update()
+
+        cutStrips = vtk.vtkStripper()  # Forms loops (closed polylines) from cutter
+        cutStrips.SetInputConnection(cut.GetOutputPort())
+        cutStrips.Update()
+        cutPoly = vtk.vtkPolyData()  # This trick defines polygons as polyline loop
+        cutPoly.SetPoints((cutStrips.GetOutput()).GetPoints())
+        cutPoly.SetPolys((cutStrips.GetOutput()).GetLines())
+
+        if(i == 1):
+            # need to be exported
+            leftSide = vtk.vtkClipPolyData()
+            leftSide.SetInputData(cutPoly)
+            leftSide.SetClipFunction(plane1)
+            leftSide.Update()
+            # need to be exported
+            rightSide = vtk.vtkClipPolyData()
+            rightSide.SetInputData(cutPoly)
+            rightSide.InsideOutOn()
+            rightSide.SetClipFunction(plane1)
+            rightSide.Update()
+
+            leftSideDorsal = vtk.vtkClipPolyData()
+            leftSideDorsal.SetInputData(leftSide.GetOutput())
+            leftSideDorsal.SetClipFunction(plane2)
+            leftSideDorsal.Update()
+
+            leftSideVentral = vtk.vtkClipPolyData()
+            leftSideVentral.SetInputData(leftSide.GetOutput())
+            leftSideVentral.InsideOutOn()
+            leftSideVentral.SetClipFunction(plane2)
+            leftSideVentral.Update()
+
+            rightSideDorsal = vtk.vtkClipPolyData()
+            rightSideDorsal.SetInputData(rightSide.GetOutput())
+            rightSideDorsal.SetClipFunction(plane2)
+            rightSideDorsal.Update()
+
+            rightSideVentral = vtk.vtkClipPolyData()
+            rightSideVentral.SetInputData(rightSide.GetOutput())
+            rightSideVentral.InsideOutOn()
+            rightSideVentral.SetClipFunction(plane2)
+            rightSideVentral.Update()
+
+            _vtkAppendPolyData.AddInputData(rightSideVentral.GetOutput())
+        else:
+            _vtkAppendPolyData.AddInputData(cutPoly)
+
 
     horizontalCutterMapper = vtk.vtkPolyDataMapper()
     horizontalCutterMapper.SetInputConnection(_vtkAppendPolyData.GetOutputPort())
@@ -67,25 +114,6 @@ if __name__ == '__main__':
     horizontalCutterActor.GetProperty().SetColor(colors.GetColor3d('Banana'))
     horizontalCutterActor.GetProperty().SetLineWidth(2)
     horizontalCutterActor.SetMapper(horizontalCutterMapper)
-
-
-    ################# cutter 1
-    # Create cutter actor
-    cutter1Mapper = vtk.vtkCompositePolyDataMapper()
-    cutter1Mapper.SetInputConnection(cutter1.GetOutputPort())
-    cutter1Mapper.ScalarVisibilityOff()
-    cutter1Actor = vtk.vtkActor()
-    cutter1Actor.SetMapper(cutter1Mapper)
-    cutter1Actor.GetProperty().SetColor(colors.GetColor3d('Banana'))
-
-    ################# cutter 2
-    # Create cutter actor
-    cutter2Mapper = vtk.vtkCompositePolyDataMapper()
-    cutter2Mapper.SetInputConnection(cutter2.GetOutputPort())
-    cutter2Mapper.ScalarVisibilityOff()
-    cutter2Actor = vtk.vtkActor()
-    cutter2Actor.SetMapper(cutter2Mapper)
-    cutter2Actor.GetProperty().SetColor(colors.GetColor3d('Banana'))
 
     ################# model
     # Create model actor
@@ -98,10 +126,8 @@ if __name__ == '__main__':
 
     # Create renderers and add actors of plane and model
     renderer = vtk.vtkRenderer()
-    renderer.AddActor(cutter1Actor)
-    renderer.AddActor(cutter2Actor)
     renderer.AddActor(horizontalCutterActor)
-    renderer.AddActor(modelActor)
+    # renderer.AddActor(modelActor)
 
     # Add renderer to renderwindow and render
     renderWindow = vtk.vtkRenderWindow()

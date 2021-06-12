@@ -11,11 +11,17 @@ def print_hi(name):
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
 
-def writeToFile(data, fileName):
+def writeToObjFile(data, fileName):
     writer = vtk.vtkOBJWriter()
     writer.SetFileName(os.path.join(os.getcwd(), "cutts", fileName))
     writer.SetInputData(data)
     writer.Update()
+
+def writeAsXmlFile(data, fileName):
+    vtkXMLPolyDataWriter = vtk.vtkXMLPolyDataWriter()
+    vtkXMLPolyDataWriter.SetFileName(os.path.join(os.getcwd(), "cutts", fileName))
+    vtkXMLPolyDataWriter.SetInputConnection(data)
+    vtkXMLPolyDataWriter.Update()
 
 
 # Press the green button in the gutter to run the script.
@@ -100,8 +106,10 @@ if __name__ == '__main__':
         rightSide.Update()
 
         if(len(protocol['right'][i]['cut']) == 1):
-            writeToFile(rightSide.GetOutput(), protocol['right'][i]['cut'][0]['name'])
-            writeToFile(leftSide.GetOutput(), protocol['left'][i]['cut'][0]['name'])
+            writeToObjFile(rightSide.GetOutput(), protocol['right'][i]['cut'][0]['name'])
+            writeToObjFile(leftSide.GetOutput(), protocol['left'][i]['cut'][0]['name'])
+            _vtkAppendPolyData.AddInputData(rightSide.GetOutput())
+            _vtkAppendPolyData.AddInputData(rightSide.GetOutput())
 
         if(len(protocol['right'][i]['cut']) > 1):
 
@@ -127,15 +135,19 @@ if __name__ == '__main__':
             rightSideVentral.SetClipFunction(plane2)
             rightSideVentral.Update()
 
-            writeToFile(rightSideVentral.GetOutput(), protocol['right'][i]['cut'][0]['name'])
-            writeToFile(rightSideDorsal.GetOutput(), protocol['right'][i]['cut'][1]['name'])
-            writeToFile(leftSideVentral.GetOutput(), protocol['left'][i]['cut'][0]['name'])
-            writeToFile(leftSideDorsal.GetOutput(), protocol['left'][i]['cut'][1]['name'])
+            writeToObjFile(rightSideVentral.GetOutput(), protocol['right'][i]['cut'][0]['name'])
+            writeToObjFile(rightSideDorsal.GetOutput(), protocol['right'][i]['cut'][1]['name'])
+            writeToObjFile(leftSideVentral.GetOutput(), protocol['left'][i]['cut'][0]['name'])
+            writeToObjFile(leftSideDorsal.GetOutput(), protocol['left'][i]['cut'][1]['name'])
 
             _vtkAppendPolyData.AddInputData(rightSideVentral.GetOutput())
+            _vtkAppendPolyData.AddInputData(rightSideDorsal.GetOutput())
+            _vtkAppendPolyData.AddInputData(leftSideVentral.GetOutput())
+            _vtkAppendPolyData.AddInputData(leftSideDorsal.GetOutput())
         else:
             _vtkAppendPolyData.AddInputData(cutPoly)
 
+    writeAsXmlFile(_vtkAppendPolyData.GetOutputPort(), "cut")
 
     horizontalCutterMapper = vtk.vtkPolyDataMapper()
     horizontalCutterMapper.SetInputConnection(_vtkAppendPolyData.GetOutputPort())

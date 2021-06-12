@@ -3,16 +3,36 @@
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 import vtk
+import json
+import os
 
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
 
+def writeToFile(data, fileName):
+    writer = vtk.vtkOBJWriter()
+    writer.SetFileName(os.path.join(os.getcwd(), "cutts", fileName))
+    writer.SetInputData(data)
+    writer.Update()
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     ColorBackground = [0.0, 0.0, 0.0]
-    numberOfCuts = 6
+
+    # read protocol file
+    with open('protocol.json', 'r') as myfile:
+        data = myfile.read()
+
+    # parse file
+    protocol = json.loads(data)
+    protocol = protocol['protocol']['data']
+    # print("usd: " + str(len(protocol['right'])))
+
+    numberOfCuts = len(protocol['right'])
+
 
     FirstObjPath = r"./MR-Model.obj"
 
@@ -34,7 +54,7 @@ if __name__ == '__main__':
     plane2.SetOrigin(reader.GetOutput().GetCenter())
     plane2.SetNormal(0, 0, 1)
 
-    p01 = (bounds[1] , bounds[0] , bounds[5])
+    p01 = (bounds[1], bounds[0], bounds[5])
     p02 = (bounds[2], bounds[3], bounds[5])
 
     # collectData
@@ -67,18 +87,23 @@ if __name__ == '__main__':
         cutPoly.SetPoints((cutStrips.GetOutput()).GetPoints())
         cutPoly.SetPolys((cutStrips.GetOutput()).GetLines())
 
-        if(i == 1):
-            # need to be exported
-            leftSide = vtk.vtkClipPolyData()
-            leftSide.SetInputData(cutPoly)
-            leftSide.SetClipFunction(plane1)
-            leftSide.Update()
-            # need to be exported
-            rightSide = vtk.vtkClipPolyData()
-            rightSide.SetInputData(cutPoly)
-            rightSide.InsideOutOn()
-            rightSide.SetClipFunction(plane1)
-            rightSide.Update()
+        # need to be exported
+        leftSide = vtk.vtkClipPolyData()
+        leftSide.SetInputData(cutPoly)
+        leftSide.SetClipFunction(plane1)
+        leftSide.Update()
+        # need to be exported
+        rightSide = vtk.vtkClipPolyData()
+        rightSide.SetInputData(cutPoly)
+        rightSide.InsideOutOn()
+        rightSide.SetClipFunction(plane1)
+        rightSide.Update()
+
+        if(len(protocol['right'][i]['cut']) == 1):
+            writeToFile(rightSide.GetOutput(), protocol['right'][i]['cut'][0]['name'])
+            writeToFile(leftSide.GetOutput(), protocol['left'][i]['cut'][0]['name'])
+
+        if(len(protocol['right'][i]['cut']) > 1):
 
             leftSideDorsal = vtk.vtkClipPolyData()
             leftSideDorsal.SetInputData(leftSide.GetOutput())
@@ -101,6 +126,11 @@ if __name__ == '__main__':
             rightSideVentral.InsideOutOn()
             rightSideVentral.SetClipFunction(plane2)
             rightSideVentral.Update()
+
+            writeToFile(rightSideVentral.GetOutput(), protocol['right'][i]['cut'][0]['name'])
+            writeToFile(rightSideDorsal.GetOutput(), protocol['right'][i]['cut'][1]['name'])
+            writeToFile(leftSideVentral.GetOutput(), protocol['left'][i]['cut'][0]['name'])
+            writeToFile(leftSideDorsal.GetOutput(), protocol['left'][i]['cut'][1]['name'])
 
             _vtkAppendPolyData.AddInputData(rightSideVentral.GetOutput())
         else:
@@ -149,14 +179,3 @@ if __name__ == '__main__':
     renderWindow.Render()
 
     interactor.Start()
-
-    # planeCut.Update()
-    #
-    # #DataSet of your cut:
-    # planeCutPolyData=planeCut.GetOutput()
-    #
-    # #Let write all the slice data:
-    # w=vtk.vtkPolyDataWriter()
-    # w.SetFileName('anyfilename.vtp')
-    # w.SetInputConnection(placeCut.GetOutputPort())
-    # w.Write()

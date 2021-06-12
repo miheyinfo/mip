@@ -1,0 +1,54 @@
+{
+    "protocol" : {
+        "data" : {
+            "right" : 
+            [
+                {"cut":[{"name": "C", "data": ""}]},
+                {"cut":[
+                    {"name": "E", "data": ""},
+                    {"name": "F", "data": ""}
+                ]},
+                {"cut":[
+                    {"name": "I", "data": ""},
+                    {"name": "J", "data": ""}
+                ]},
+                {"cut":[
+                    {"name": "M", "data": ""},
+                    {"name": "N", "data": ""}
+                ]},
+                {"cut":[
+                    {"name": "Q", "data": ""},
+                    {"name": "R", "data": ""}
+                ]},
+                {"cut":[
+                    {"name": "U", "data": ""},
+                    {"name": "V", "data": ""}
+                ]}
+            ],
+            "left" : 
+            [
+                {"cut":[{"name": "D", "data": ""}]},
+                {"cut":[
+                    {"name": "G", "data": ""},
+                    {"name": "H", "data": ""}
+                ]},
+                {"cut":[
+                    {"name": "K", "data": ""},
+                    {"name": "L", "data": ""}
+                ]},
+                {"cut":[
+                    {"name": "O", "data": ""},
+                    {"name": "P", "data": ""}
+                ]},
+                {"cut":[
+                    {"name": "S", "data": ""},
+                    {"name": "T", "data": ""}
+                ]},
+                {"cut":[
+                    {"name": "W", "data": ""},
+                    {"name": "X", "data": ""}
+                ]}
+            ]
+        }
+    }
+}

@@ -6,7 +6,7 @@ if __name__ == '__main__':
     colors = vtk.vtkNamedColors()
 
     vtkXMLPolyDataReader = vtk.vtkXMLPolyDataReader()
-    vtkXMLPolyDataReader.SetFileName(os.path.join(os.getcwd(), "cutts", "cut"))
+    vtkXMLPolyDataReader.SetFileName(os.path.join(os.getcwd(), "cut"))
     vtkXMLPolyDataReader.Update()
 
     # Create model actor

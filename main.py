@@ -13,13 +13,13 @@ def print_hi(name):
 
 def writeToObjFile(data, fileName):
     writer = vtk.vtkOBJWriter()
-    writer.SetFileName(os.path.join(os.getcwd(), "cutts", fileName + ".obj"))
+    writer.SetFileName(os.path.join(os.getcwd(), fileName + ".obj"))
     writer.SetInputData(data)
     writer.Update()
 
 def writeAsXmlFile(data, fileName):
     vtkXMLPolyDataWriter = vtk.vtkXMLPolyDataWriter()
-    vtkXMLPolyDataWriter.SetFileName(os.path.join(os.getcwd(), "cutts", fileName))
+    vtkXMLPolyDataWriter.SetFileName(os.path.join(os.getcwd(), fileName))
     vtkXMLPolyDataWriter.SetInputConnection(data)
     vtkXMLPolyDataWriter.Update()
 

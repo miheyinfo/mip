@@ -13,7 +13,7 @@ def print_hi(name):
 
 def writeToObjFile(data, fileName):
     writer = vtk.vtkOBJWriter()
-    writer.SetFileName(os.path.join(os.getcwd(), "cutts", fileName))
+    writer.SetFileName(os.path.join(os.getcwd(), "cutts", fileName + ".obj"))
     writer.SetInputData(data)
     writer.Update()
 

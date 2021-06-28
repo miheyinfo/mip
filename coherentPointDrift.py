@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import json
 from functools import partial
 from pycpd import AffineRegistration
+from pycpd import DeformableRegistration
 
 
 def visualize(iteration, error, X, Y, ax):
@@ -23,10 +24,8 @@ def plotContourCoordinates(contour_coordinates):
         x.append(item[0])
         y.append(item[1])
 
-    fig = plt.figure()
     # plt.plot(x, y, linestyle='-', color='black')
-    plt.plot(x, y, 'o', color='red')
-    plt.draw()
+    plt.plot(x, y, 'o')
     plt.pause(0.001)
 
 def getCoordinatesFromObjFile(fileName):
@@ -57,7 +56,7 @@ def main():
     # plotContourCoordinates(X)
     coordinatesFromObj = getCoordinatesFromObjFile('C.obj')
     # print(coordinatesFromObj)
-    plotContourCoordinates(coordinatesFromObj)
+    #plotContourCoordinates(coordinatesFromObj)
 
     # read file
     with open('FALL-Y-1-C_GeoJSON.json', 'r') as jsonFile:
@@ -72,18 +71,25 @@ def main():
     contour_coordinates = np.array(contour[0]["geometry"]["coordinates"][0])
     #plotContourCoordinates(contour_coordinates)
     #
+
+
     contour_coordinates = rotate(contour_coordinates, -1.66)
+
+    for item in contour_coordinates:
+        item[1] += 120000
+
     #plotContourCoordinates(contour_coordinates)
 
-    X = contour_coordinates
-    Y = coordinatesFromObj
-
-    fig = plt.figure()
-    fig.add_axes([0, 0, 1, 1])
-    callback = partial(visualize, ax=fig.axes[0])
+    Y = contour_coordinates
+    X = coordinatesFromObj
 
     reg = AffineRegistration(**{'X': X, 'Y': Y})
-    reg.register(callback)
+    poly_wsi_reg = reg.register()[0]
+
+    plotContourCoordinates(contour_coordinates)
+    plotContourCoordinates(coordinatesFromObj)
+    plotContourCoordinates(poly_wsi_reg)
+
     plt.show()
 
 

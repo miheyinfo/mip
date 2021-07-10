@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import json
 from functools import partial
 from pycpd import AffineRegistration
+from pycpd import RigidRegistration
 from pycpd import DeformableRegistration
 
 
@@ -89,7 +90,7 @@ def main():
     objectNames = ['C','D','E','F','G','H']
     for name in objectNames:
         coordinatesFromObj = getCoordinatesFromObjFile(name + '.obj')
-        coordinatesFromJSON = np.array(getContourCoordinatesFromJSONFile('FALL-Y-1-' + name + '_GeoJSON.json'))
+        coordinatesFromJSON = getContourCoordinatesFromJSONFile('FALL-Y-1-' + name + '_GeoJSON.json')
 
         # if name == 'C':
         #     coordinatesFromJSON = rotate(coordinatesFromJSON, -1.66)
@@ -104,7 +105,7 @@ def main():
 
         # plotTwoFigures(coordinatesFromJSON, coordinatesFromObj)
 
-        reg = AffineRegistration(**{'X': np.array(coordinatesFromObj), 'Y': np.array(coordinatesFromJSON)})
+        reg = RigidRegistration(**{'X': np.array(coordinatesFromObj), 'Y': np.array(coordinatesFromJSON)})
         poly_wsi_reg = reg.register()[0]
 
         plotTwoFigures(coordinatesFromObj, poly_wsi_reg)
